@@ -1,0 +1,18 @@
+cabal-version: >= 1.6
+name:          geohash
+version:       1.0
+build-type:    Simple
+license:       BSD3
+license-file:  LICENSE
+author:        marius a. eriksen
+category:      Hash functions
+synopsis:      Geohash latitudes and longitudes.
+description:   Implements the geohash algorithm described here:
+                 http://en.wikipedia.org/wiki/Geohash
+maintainer:    marius a. eriksen
+copyright:     (c) 2009 marius a. eriksen
+
+library
+  build-depends: base == 4.*
+  exposed-modules:
+    Data.Geohash
