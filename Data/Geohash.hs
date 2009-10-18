@@ -10,6 +10,9 @@
 -- Compute geohashes as per @http://en.wikipedia.org/wiki/Geohash@
 -- Note that the implementation pays little regard to performance at
 -- this point.
+-- 
+-- TODO: - check ranges of input, return Maybe.
+--       - return precision/error values in decode?
 
 module Data.Geohash
   ( encode
@@ -52,12 +55,9 @@ b32decode (c:cs) =
   (reverse . take 5 $ bits2bools bits) ++ b32decode cs
   where bits = b32_!(ord c)
 
--- TODO: - check ranges, etc.
---       - < vs. <=
-
 bitstring (beg, end) x
-  | x < mid   = False:bitstring (beg, mid) x
-  | otherwise =  True:bitstring (mid, end) x
+  | x > mid   =  True:bitstring (mid, end) x
+  | otherwise = False:bitstring (beg, mid) x
   where
     mid = beg + ((end - beg)/2)
 
@@ -68,7 +68,14 @@ unbitstring (beg, end) (x:xs)
   where 
     mid = beg + ((end - beg)/2)
 
-encode :: (Fractional a, Ord a) => (a, a) -> String
+-- | Encode a geohash from the given @(lat, lon)@ pair. We return an
+-- infinite list, so make sure to take only your needed precision.
+-- 
+-- > take 10 $ encode (37.775, -122.419)
+-- "9q8yyk9pqd"
+encode :: (Fractional a, Ord a) 
+       => (a, a)                -- ^ @(lat, lon)@ pair
+       -> String                -- ^ geohash
 encode (lat, lon) =
   b32encode $ interleave lonBits latBits
   where
@@ -79,13 +86,27 @@ encode (lat, lon) =
     lonBits = bitstring (-180, 180) lon
     latBits = bitstring (-90 , 90)  lat
 
-decode :: (Fractional a) => String -> (a, a)
+-- | Decode a geohash into a @(lat, lon)@ pair.
+-- 
+-- > decode "9q8yyk9pqd"
+-- (37.775000631809235,-122.4189966917038)
+decode :: (Fractional a) 
+       => String                -- ^ geohash
+       -> (a, a)                -- ^ @(lat, lon)@
 decode geohash = 
   (latmin + (latmax - latmin) / 2, lonmin + (lonmax - lonmin) / 2)
   where
     ((latmin, latmax), (lonmin, lonmax)) = decode_ geohash
 
-decode_ :: (Fractional a) => String -> ((a, a), (a, a))
+-- | Decode a geohash into ranges of latitude & longitude. This
+-- reflects the precision of the decode and can be used to construct a
+-- bounding box.
+-- 
+-- > decode_ "9q8yyk9pqd"
+-- ((37.77499794960022,37.77500331401825),(-122.41900205612183,-122.41899132728577))
+decode_ :: (Fractional a) 
+        => String               -- ^ geohash
+        -> ((a, a), (a, a))     -- ^ @((latmin, latmax), (lonmin, lonmax))@
 decode_ geohash =
   (unbitstring (-90, 90) latBits, unbitstring (-180, 180) lonBits)
   where 
