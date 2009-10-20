@@ -5,14 +5,14 @@ build-type:    Simple
 license:       BSD3
 license-file:  LICENSE
 author:        marius a. eriksen
-category:      Hash functions
+category:      Data
 synopsis:      Geohash latitudes and longitudes.
 description:   Implements the geohash algorithm described here:
-                 http://en.wikipedia.org/wiki/Geohash
+                 <http://en.wikipedia.org/wiki/Geohash>
 maintainer:    marius a. eriksen
 copyright:     (c) 2009 marius a. eriksen
 
 library
-  build-depends: base == 4.*
+  build-depends: base == 4.*, array >= 0.2
   exposed-modules:
     Data.Geohash
