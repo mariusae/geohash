@@ -7,11 +7,7 @@
 -- Stability   : experimental
 -- Portability : GHC
 --
--- Compute geohashes as per @http://en.wikipedia.org/wiki/Geohash@
--- Note that the implementation pays little regard to performance at
--- this point.
--- 
--- TODO: return precision/error values in decode?
+-- Compute geohashes as per <http://en.wikipedia.org/wiki/Geohash>.
 
 module Data.Geohash
   ( encode
@@ -83,9 +79,6 @@ unbitstring (beg, end) (x:xs)
 -- precision.
 -- 
 -- > encode 10 (37.775, -122.419)
--- Just "9q8yyk9pqd"
--- > encode 10 (37.775, -222.419)
--- Nothing
 encode :: (Fractional a, Ord a)
        => Int                   -- ^ precision
        -> (a, a)                -- ^ @(lat, lon)@ pair
@@ -106,7 +99,6 @@ encode precision (lat, lon) =
 -- | Decode a geohash into a @(lat, lon)@ pair.
 -- 
 -- > decode "9q8yyk9pqd"
--- Just (37.775000631809235,-122.4189966917038)
 decode :: (Fractional a) 
        => String                -- ^ geohash
        -> Maybe (a, a)          -- ^ @(lat, lon)@
@@ -121,8 +113,7 @@ decode geohash =
 -- bounding box.
 -- 
 -- > decode_ "9q8yyk9pqd"
--- Just ((37.77499794960022,37.77500331401825),(-122.41900205612183,-122.41899132728577))
-decode_ :: (Fractional a) 
+decode_ :: (Fractional a)
         => String                  -- ^ geohash
         -> Maybe ((a, a), (a, a))  -- ^ @((latmin, latmax), (lonmin, lonmax))@
 decode_ geohash =
