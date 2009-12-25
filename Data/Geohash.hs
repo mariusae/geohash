@@ -20,24 +20,31 @@ import Data.Array
 import Data.Char
 import Data.List
 
--- base-32 encoding using the table in the Wikipedia article.
+-- could pre-multiply out the various hashes (& need to distinguish
+-- what they mean for even & odd values).
+
+-- base-32 encoding using the table in the Wikipedia article, and some
+-- convenient lookup tables based on it.
 b32chr = "0123456789bcdefghjkmnpqrstuvwxyz"
 b32 = array (0, l) $ zip [0..l] b32chr
-  where l = length b32chr
+  where l = (length b32chr) - 1
 b32_ = array (48, 122) $ [(i, indexOfChr (chr i)) | i <- [48..122]]
   where indexOfChr c = maybe (-1) id (elemIndex c b32chr)
+b32ToBools = array (0, l) $ map (\x -> (x, decode (b32!x))) [0..l]
+  where
+    l = snd $ bounds b32
+    decode c = reverse . take 5 $ bits2bools $ b32_!(ord c)
+    bits2bools bs =
+      case bs .&. 1 of
+        1 ->  True:bits2bools bs'
+        0 -> False:bits2bools bs'
+      where bs' = bs `shiftR` 1
 
 bools2bits bs =
   foldl (.|.) 0 $ bits bs 0
   where bits []         _   = [0]
         bits (True:bs)  pos = bit pos:bits bs (pos + 1)
         bits (False:bs) pos =       0:bits bs (pos + 1)
-
-bits2bools bs =
-  case bs .&. 1 of
-    1 ->  True:bits2bools bs'
-    0 -> False:bits2bools bs'
-  where bs' = bs `shiftR` 1
 
 b32encode bits =
   b32!index:b32encode next
@@ -46,21 +53,17 @@ b32encode bits =
     index :: Int
     index = bools2bits $ reverse this
 
-
 b32decode :: String -> Maybe [Bool]
 b32decode s =
-  if all wellDefined $ map ord s
-    then Just $ decode s
+  if all wellDefined ords
+    then Just $ concatMap ((b32ToBools!) . (b32_!)) ords
     else Nothing
   where
+    ords = map ord s
     wellDefined ix = 
       if inRange (bounds b32_) ix
         then b32_!ix /= -1
         else False
-    decode [] = []
-    decode (c:cs) =
-      (reverse . take 5 $ bits2bools bits) ++ decode cs
-      where bits = b32_!(ord c)
 
 bitstring (beg, end) x
   | x > mid   =  True:bitstring (mid, end) x
